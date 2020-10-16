@@ -1,31 +1,65 @@
 ### Note
 
-This `README` documents the new method to install macOS. The older `README` is
-available [here](README-OLD.md).
-
-This new method does *not* require an existing physical/virtual macOS
-installation. However, this `new method` requires internet access during the
-macOS installation process. This limitation may be addressed in a future
-commit.
+This `README.md` documents the process of creating a `Virtual Hackintosh`
+system.
 
 Note: All blobs and resources included in this repository are re-derivable (all
 instructions are included!).
 
-Note: Checkout [ideas.md](ideas.md). This project can always use your help,
-time and attention.
+:green_heart: Looking for **commercial** support with this stuff? I am [available
+over email](mailto:dhiru.kholia@gmail.com?subject=[GitHub]%20OSX-KVM%20Commercial%20Support%20Request&body=Hi%20-%20We%20are%20interested%20in%20purchasing%20commercial%20support%20options%20for%20your%20project.) for a chat for **commercial support options only**.
+
+Looking for `Big Sur` support? See these [notes](Big-Sur.md).
+
+Yes, we support offline macOS installations now 🎉
+
+
+### Contributing Back
+
+This project can always use your help, time and attention. I am looking for
+help (pull-requests!) with the following work items:
+
+* Create *full* installation (ISO) image without requiring an existing macOS
+  physical/virtual installation.
+
+* Documentation around running macOS on popular cloud providers (GCP, AWS). See
+  the `Is This Legal?` section and associated references.
+
+* Test `accel=hvf` flag on QEMU + macOS Mojave on MacBook Pro.
+
+* Document (share) how you use this project to build + test open-source
+  projects / get your stuff done.
+
+* Document how to use this project for iOS development.
+
+* Document how to use this project for XNU kernel debugging and development.
+
+* Document the process to create and reuse VM snapshots. Instantaneous macOS
+  boots would be nice this way.
+
+* Document the process to launch a bunch of headless macOS VMs (build farm).
+
+* Document usage of [munki](https://github.com/munki/munki) to deploy software
+  to such a `build farm`.
+
+* Enable SSH support out of the box or more easily.
+
+* Better support + docs for AMD Ryzen.
+
+* Patches to unify the various scripts we have. Robustness improvements.
 
 
 ### Requirements
 
-* A modern Linux distribution. E.g. Ubuntu 18.04 LTS 64-bit.
+* A modern Linux distribution. E.g. Ubuntu 20.04 LTS 64-bit or later.
 
-* QEMU > 2.11.1
+* QEMU >= 4.2.0
 
 * A CPU with Intel VT-x / AMD SVM support is required
 
-* A CPU with SSE4.1 support is required for macOS Sierra
+* A CPU with SSE4.1 support is required for >= macOS Sierra
 
-* A CPU with AVX2 support is required for macOS Mojave
+* A CPU with AVX2 support is required for >= macOS Mojave
 
 Note: Older AMD CPU(s) are known to be problematic. AMD FX-8350 works but
 Phenom II X3 720 does not. Ryzen processors work just fine.
@@ -48,7 +82,7 @@ Phenom II X3 720 does not. Ryzen processors work just fine.
 * Install QEMU and other packages.
 
   ```
-  sudo apt-get install qemu uml-utilities virt-manager dmg2img git wget
+  sudo apt-get install qemu uml-utilities virt-manager git wget libguestfs-tools -y
   ```
 
   This step may need to be adapted for your Linux distribution.
@@ -59,7 +93,7 @@ Phenom II X3 720 does not. Ryzen processors work just fine.
   ```
   cd ~
 
-  git clone https://github.com/kholia/OSX-KVM.git
+  git clone --depth 1 https://github.com/kholia/OSX-KVM.git
 
   cd OSX-KVM
   ```
@@ -77,32 +111,40 @@ Phenom II X3 720 does not. Ryzen processors work just fine.
 
   ```
   $ ./fetch-macOS.py
-  #    ProductID    Version    Build   Post Date  Title
-  1    041-47723    10.14.4  18E2034  2019-03-25  macOS Mojave
-  2    091-95155    10.13.6    17G66  2019-01-08  macOS High Sierra
-  3    041-64745    10.14.5   18F203  2019-05-22  macOS Mojave
-  4    041-59913    10.14.5   18F132  2019-05-13  macOS Mojave
-  5    041-71284      10.15  19A471t  2019-06-03  macOS 10.15 Beta
+   #    ProductID    Version   Post Date  Title
+   1    061-26578    10.14.5  2019-10-14  macOS Mojave
+   2    061-26589    10.14.6  2019-10-14  macOS Mojave
+   3    041-91758    10.13.6  2019-10-19  macOS High Sierra
+   4    041-88800    10.14.4  2019-10-23  macOS Mojave
+   5    041-90855    10.13.5  2019-10-23  Install macOS High Sierra Beta
+   6    061-86291    10.15.3  2020-03-23  macOS Catalina
+   7    001-04366    10.15.4  2020-05-04  macOS Catalina
+   8    001-15219    10.15.5  2020-06-15  macOS Catalina
+   9    001-36735    10.15.6  2020-08-06  macOS Catalina
+  10    001-36801    10.15.6  2020-08-12  macOS Catalina
+  11    001-51042    10.15.7  2020-09-24  macOS Catalina
 
-  Choose a product to download (1-5): 5
+  Choose a product to download (1-11): 11
   ```
 
-  Attention: Modern NVIDIA GPUs are supported on HighSierra but not on Mojave
-  (yet).
+  Attention: Modern NVIDIA GPUs are supported on HighSierra but not on later
+  versions (yet).
 
   Next, convert this file into a usable format.
 
   ```
-  dmg2img BaseSystem.dmg BaseSystem.img
+  qemu-img convert BaseSystem.dmg -O raw BaseSystem.img
   ```
 
-* Create a virtual HDD image where macOS will be installed.  If you change the
+* Create a virtual HDD image where macOS will be installed. If you change the
   name of the disk image from `mac_hdd.img` to something else, the boot scripts
-  will need updating to point to the new image name.
+  will need to be updated to point to the new image name.
 
   ```
   qemu-img create -f qcow2 mac_hdd_ng.img 128G
   ```
+
+  NOTE: Create this HDD image file on a fast SSD/NVMe disk for best results.
 
 * Setup quick networking by running the following commands.
 
@@ -127,53 +169,58 @@ Phenom II X3 720 does not. Ryzen processors work just fine.
 
 ### Installation
 
-- CLI method (primary). Just run the `boot-macOS-NG.sh` script to start the
+- CLI method (primary). Just run the `OpenCore-Boot.sh` script to start the
   installation proces.
 
   ```
-  ./boot-macOS-NG.sh
+  ./OpenCore-Boot.sh
   ```
+
+  Note: This same script works for Big Sur, Catalina, Mojave, and High Sierra.
 
   If you are new to installing macOS, see the [older README](README-OLD.md) for
   help.
 
-  For macOS Catalina, use `boot-macOS-Catalina.sh` script.
+- You are all set! 🙌
 
-- GUI method (alternate - functional but needs further debugging work).
+- (OPTIONAL) Use this macOS VM disk with libvirt (virt-manager / virsh stuff).
 
-  - Edit `macOS-libvirt-NG.xml` file and change the various file paths (search
+  - Edit `macOS-libvirt-Catalina.xml` file and change the various file paths (search
     for `CHANGEME` strings in that file). The following command should do the
     trick usually.
 
     ```
-    sed -i "s/CHANGEME/$USER/g" macOS-libvirt-NG.xml
+    sed -i "s/CHANGEME/$USER/g" macOS-libvirt-Catalina.xml
+
+    virt-xml-validate macOS-libvirt-Catalina.xml
     ```
 
   - Create a VM by running the following command.
 
     ```bash
-    virsh --connect qemu:///system define macOS-libvirt-NG.xml
+    virsh --connect qemu:///system define macOS-libvirt-Catalina.xml
     ```
 
-  - Launch `virt-manager`, start the `macOS` virtual machine and install macOS
-    as usual.
+  - Launch `virt-manager` and start the `macOS` virtual machine.
 
     Note: You may need to run `sudo ip link delete tap0` command before
     `virt-manager` is able to start the `macOS` VM.
 
-    Note: You may need to remove the following block from `macOS-libvirt-NG.xml`
-    and run `virsh --connect ...` again. Alternate easier fix: Remove `SATA
-    Disk 3` from the macOS virtual machine in `virt-manager`.
 
-    ```
-    <disk type='file' device='disk'>
-    <driver name='qemu' type='raw' cache='writeback'/>
-      <source file='/home/CHANGEME/OSX-KVM/BaseSystem.img'/>
-      <target dev='sdc' bus='sata'/>
-      <boot order='3'/>
-      <address type='drive' controller='0' bus='0' target='0' unit='2'/>
-    </disk>
-    ```
+### Setting Expectations Right
+
+Nice job on setting up a `Virtual Hackintosh` system! Such a system can be used
+for a variety of purposes (e.g. software builds, testing, reversing work), and
+it may be all you need, along with some tweaks documented in this repository.
+
+However, such a system lacks graphical acceleration, a reliable sound sub-system,
+USB (3) functionality and other similar things. To enable these things, take a
+look at our [notes](notes.md). We would like to resume our testing and
+documentation work around this area. Please [reach out to us](mailto:dhiru.kholia@gmail.com?subject=[GitHub]%20OSX-KVM%20Funding%20Support)
+if you are able to fund this area of work.
+
+It is possible to have 'beyond-native-apple-hw' performance but it does require
+work, patience, and a bit of luck (perhaps?).
 
 
 ### Post-Installation
@@ -183,7 +230,7 @@ Phenom II X3 720 does not. Ryzen processors work just fine.
   I have the following commands present in `/etc/rc.local`.
 
   ```
-  #!/bin/bash
+  #!/usr/bin/env bash
 
   sudo ip tuntap add dev tap0 mode tap
   sudo ip link set tap0 up promisc on
@@ -193,36 +240,31 @@ Phenom II X3 720 does not. Ryzen processors work just fine.
 
   This has been enough for me so far.
 
+  Note: You may need to [enable the `rc.local` functionality manually on modern Ubuntu versions](https://linuxmedium.com/how-to-enable-etc-rc-local-with-systemd-on-ubuntu-20-04/).
+
 * To get sound on your virtual Mac, see the "Virtual Sound Device" in [notes](notes.md).
 
-* To passthrough GPUs and other devices, see [these notes](UEFI/README.md).
+* To passthrough GPUs and other devices, see [these notes](notes.md).
 
-* Need a different resolution? Check out the [notes](notes.md) included in this
-  repository.
+* Need a different resolution? Check out the [notes](notes.md) included in this repository.
+
+* To generate your own SMBIOS, use [GenSMBIOS](https://github.com/corpnewt/GenSMBIOS).
 
 
 ### Is This Legal?
 
 The "secret" Apple OSK string is widely available on the Internet. It is also included in a public court document [available here](http://www.rcfp.org/sites/default/files/docs/20120105_202426_apple_sealing.pdf). I am not a lawyer but it seems that Apple's attempt(s) to get the OSK string treated as a trade secret did not work out. Due to these reasons, the OSK string is freely included in this repository.
 
-Gabriel Somlo also has [some thoughts](http://www.contrib.andrew.cmu.edu/~somlo/OSXKVM/#sec_4) on the legal aspects involved in running macOS under QEMU/KVM.
+Gabriel Somlo also has [some thoughts](http://www.contrib.andrew.cmu.edu/~somlo/OSXKVM/) on the legal aspects involved in running macOS under QEMU/KVM.
 
 
 ### Motivation
 
-My aim is to enable macOS based builds + testing, kernel debugging, reversing
-and security tasks in an easy, reproducible manner without needing to invest in
-Apple's closed ecosystem (too heavily).
+My aim is to enable macOS based educational tasks, builds + testing, kernel
+debugging, reversing, and macOS security research in an easy, reproducible
+manner without needing to invest in Apple's closed ecosystem (too heavily).
 
-Backstory: I was a (poor) student in Canada once and Apple made [my work on
-cracking Apple Keychains](https://github.com/magnumripper/JohnTheRipper/) a lot
-harder than it needed to be.
+These `Virtual Hackintosh` systems are not intended to replace the genuine
+physical macOS systems.
 
-
-### References
-
-* https://github.com/foxlet/macOS-Simple-KVM
-
-* http://www.contrib.andrew.cmu.edu/~somlo/OSXKVM/
-
-* https://www.kraxel.org/blog/2017/09/running-macos-as-guest-in-kvm/
+Backstory: I was a (poor) student in Canada once and Apple made [my work on cracking Apple Keychains](https://github.com/openwall/john/blob/bleeding-jumbo/src/keychain_fmt_plug.c) a lot harder than it needed to be.

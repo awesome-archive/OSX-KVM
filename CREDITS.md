@@ -55,3 +55,37 @@
 * Niklas Korz (niklaskorz) - Stop using brctl
 
 * Mike Bybee (stereoplegic) - Higher resolution documentation
+
+* Yarkhan - Passthrough for making iDevices work
+
+* Yu-Chen Lin (npes87184) - Virtio and qemu-img notes
+
+* Wen-He - Catalina related fixes
+
+* Alexander Galato (alet) - OVMF build documentation fixes
+
+* zimbatm - portability enhancements, cool crazy ideas (thanks!)
+
+* https://github.com/Leoyzen/KVM-Opencore - OpenCore support
+
+* Kyle Dayton - UEFI, Clover, and GPU passthrough notes
+
+- foxtrotdragon - OpenCore language fixes
+
+- hoshsadiq (Hosh) - fetch-macOS.py improvements
+
+- philffm - Typo fix in `Big-Sur.md`
+
+- jviotti - Headless mode fixes
+
+- offlinehacker - libvirt support
+
+- hellodeibu - Big Sur support
+
+- kittywhiskers - Large number of changes - thank you!
+
+- zimbatm - Thank you!
+
+- Peter Asanov (ink-splatters) - Fixes for the OS-fetch script
+
+- Sangwhan "fish" Moon - Big Sur doc enhancements
